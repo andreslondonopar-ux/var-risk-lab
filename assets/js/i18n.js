@@ -195,18 +195,16 @@ const I18N = (() => {
     "limits.reading": {
       es: `Para profundizar: Philippe Jorion, <em>"Value at Risk: The New Benchmark for
         Managing Financial Risk"</em>, el texto de referencia estándar; los criterios de
-        Basel III sobre Expected Shortfall; y los otros sitios de esta serie —
+        Basel III sobre Expected Shortfall;
         <a href="https://markowitz-portfolio-lab.vercel.app" target="_blank" rel="noopener">Markowitz Portfolio Lab</a>
-        (de donde sale la matriz de covarianza que usa este sitio),
-        <a href="https://capm-beta-lab.vercel.app" target="_blank" rel="noopener">CAPM Beta-Alpha Lab</a>, y
-        <a href="https://black-scholes-lab.vercel.app" target="_blank" rel="noopener">Black-Scholes / Options Greeks Lab</a>.`,
+        (de donde sale la matriz de covarianza que usa este sitio); y el resto de la
+        serie de sitios sobre finanzas cuantitativas (ver Creador, abajo).`,
       en: `To go deeper: Philippe Jorion, <em>"Value at Risk: The New Benchmark for
         Managing Financial Risk"</em>, the standard reference text; the Basel III
-        criteria on Expected Shortfall; and the other sites in this series —
+        criteria on Expected Shortfall;
         <a href="https://markowitz-portfolio-lab.vercel.app" target="_blank" rel="noopener">Markowitz Portfolio Lab</a>
-        (where this site's covariance matrix comes from),
-        <a href="https://capm-beta-lab.vercel.app" target="_blank" rel="noopener">CAPM Beta-Alpha Lab</a>, and
-        <a href="https://black-scholes-lab.vercel.app" target="_blank" rel="noopener">Black-Scholes / Options Greeks Lab</a>.`,
+        (where this site's covariance matrix comes from); and the rest of the
+        quantitative finance series (see Creator, below).`,
     },
 
     "creator.badge": { es: "CREADOR", en: "CREATOR" },
@@ -214,8 +212,8 @@ const I18N = (() => {
     "creator.text": { es: "Hecho por Andrés Londoño.", en: "Made by Andrés Londoño." },
 
     "footer.text": {
-      es: "VaR Dashboard — proyecto educativo independiente, cuarto de la serie junto a Markowitz Portfolio Lab, CAPM Beta-Alpha Lab y Black-Scholes / Options Greeks Lab. Datos: Yahoo Finance. Cómputo: 100% en el navegador (JavaScript).",
-      en: "VaR Dashboard — an independent educational project, fourth in the series alongside Markowitz Portfolio Lab, CAPM Beta-Alpha Lab, and Black-Scholes / Options Greeks Lab. Data: Yahoo Finance. Computation: 100% in the browser (JavaScript).",
+      es: "VaR Dashboard — proyecto educativo independiente, cuarto de una serie de sitios sobre finanzas cuantitativas (ver Creador para los demás). Datos: Yahoo Finance. Cómputo: 100% en el navegador (JavaScript).",
+      en: "VaR Dashboard — an independent educational project, fourth in a series of quantitative finance sites (see Creator for the rest). Data: Yahoo Finance. Computation: 100% in the browser (JavaScript).",
     },
 
     // --- Generado por JS ---
