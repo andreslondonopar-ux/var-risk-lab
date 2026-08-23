@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VaR Dashboard — Value at Risk de un portafolio, paso a paso</title>
+<meta name="description" content="Un laboratorio educativo interactivo que calcula el Value at Risk de un portafolio real por 3 métodos (histórico, paramétrico, Monte Carlo), con Expected Shortfall y backtesting." />
+
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://var-risk-lab.vercel.app/" />
+<meta property="og:title" content="VaR Dashboard — Value at Risk de un portafolio, paso a paso" />
+<meta property="og:description" content="Un laboratorio educativo interactivo que calcula el Value at Risk de un portafolio real por 3 métodos (histórico, paramétrico, Monte Carlo), con Expected Shortfall y backtesting." />
+<meta property="og:image" content="https://var-risk-lab.vercel.app/assets/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:locale" content="es" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="VaR Dashboard — Value at Risk de un portafolio, paso a paso" />
+<meta name="twitter:description" content="Un laboratorio educativo interactivo que calcula el Value at Risk de un portafolio real por 3 métodos (histórico, paramétrico, Monte Carlo), con Expected Shortfall y backtesting." />
+<meta name="twitter:image" content="https://var-risk-lab.vercel.app/assets/og-image.png" />
+
+<link rel="stylesheet" href="assets/css/site.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+<style>
+  .portfolio-table { display: flex; flex-direction: column; gap: 8px; max-width: 1400px; }
+  .portfolio-header { display: flex; gap: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); padding: 0 4px; }
+  .portfolio-header span:first-child { flex: 1 1 260px; }
+  .portfolio-header span:nth-child(2) { width: 110px; }
+  .portfolio-row { display: flex; gap: 10px; align-items: center; }
+  .portfolio-row .port-ticker {
+    flex: 1 1 260px; min-width: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+    color: var(--text); padding: 9px 12px; font-family: var(--font-mono); font-size: 14px;
+  }
+  .portfolio-row .port-weight {
+    width: 110px; flex-shrink: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+    color: var(--text); padding: 9px 12px; font-family: var(--font-mono); font-size: 14px;
+  }
+  .portfolio-row .port-remove {
+    background: none; border: 1px solid var(--line); color: var(--text-faint); border-radius: 6px;
+    width: 36px; height: 36px; cursor: pointer; font-size: 16px; flex-shrink: 0;
+  }
+  .portfolio-row .port-remove:hover { color: var(--accent3); border-color: var(--accent3); }
+  @media (max-width: 480px) {
+    .portfolio-row { flex-wrap: wrap; }
+    .portfolio-row .port-ticker { flex-basis: 100%; }
+    .portfolio-row .port-weight { flex: 1 1 auto; width: auto; }
+    .portfolio-header span:first-child { flex-basis: 100%; }
+  }
+  .add-row-btn {
+    align-self: flex-start; margin-top: 4px; background: transparent; border: 1px dashed var(--line);
+    color: var(--text-faint); font-family: var(--font-mono); font-size: 13px; padding: 8px 16px;
+    border-radius: 6px; cursor: pointer;
+  }
+  .add-row-btn:hover { color: var(--accent); border-color: var(--accent); }
+  select {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 6px; color: var(--text);
+    padding: 9px 12px; font-family: var(--font-mono); font-size: 14px; width: 100%;
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="wrap">
+    <div class="brand">VaR<span>Lab</span></div>
+    <nav>
+      <a href="#intro" data-i18n="nav.intro">Intro</a>
+      <a href="#paso1" data-i18n="nav.paso1">1. Portafolio</a>
+      <a href="#paso2" data-i18n="nav.paso2">2. Retornos</a>
+      <a href="#paso3" data-i18n="nav.paso3">3. VaR Histórico</a>
+      <a href="#paso4" data-i18n="nav.paso4">4. VaR Paramétrico</a>
+      <a href="#paso5" data-i18n="nav.paso5">5. Monte Carlo</a>
+      <a href="#paso6" data-i18n="nav.paso6">6. Comparación</a>
+      <a href="#paso7" data-i18n="nav.paso7">7. Backtesting</a>
+      <a href="#limitaciones" data-i18n="nav.limites">Límites</a>
+      <a href="#creador" data-i18n="nav.creador">Creador</a>
+    </nav>
+    <button type="button" id="lang-toggle" class="lang-toggle" aria-label="Switch language / Cambiar idioma">EN</button>
+  </div>
+</div>
+
+<header class="hero" id="intro">
+  <div class="wrap">
+    <p class="eyebrow" data-i18n="hero.eyebrow">Proyecto educativo · Value at Risk</p>
+    <h1 data-i18n="hero.h1">VaR Dashboard: cuánto se puede perder, paso a paso</h1>
+    <p class="lead" data-i18n="hero.lead">
+      El Value at Risk responde una pregunta muy concreta: con X% de confianza, ¿cuánto
+      podría perder este portafolio en N días? No es una cifra mágica — es una
+      estimación que depende del método usado, y este sitio calcula las 3 formas
+      estándar de estimarla (histórica, paramétrica, Monte Carlo) sobre un portafolio
+      real, con datos reales, y las pone a competir contra lo que de verdad pasó.
+    </p>
+
+    <div class="control-bar">
+      <div class="field small">
+        <label for="confidence-select" data-i18n="controls.confidenceLabel">Nivel de confianza</label>
+        <select id="confidence-select">
+          <option value="0.95" selected>95%</option>
+          <option value="0.99">99%</option>
+        </select>
+      </div>
+      <div class="field small">
+        <label for="horizon-input" data-i18n="controls.horizonLabel">Horizonte (días)</label>
+        <input id="horizon-input" type="number" step="1" min="1" max="250" value="1" />
+      </div>
+      <div class="field small">
+        <label for="years-input" data-i18n="controls.yearsLabel">Años de histórico</label>
+        <input id="years-input" type="number" step="1" min="1" max="15" value="3" />
+      </div>
+      <button class="primary" id="recalc-btn" data-i18n="controls.recalcBtn">Recalcular</button>
+    </div>
+    <div class="status-line" id="status-line" data-i18n="controls.loadingDefault">Cargando ejemplo por defecto…</div>
+    <p style="font-size:13px; color:var(--text-faint); margin-top:10px; max-width:700px;" data-i18n="controls.hint">
+      Todos los campos de esta página alimentan el mismo cálculo — cambia cualquiera y presiona "Recalcular" arriba.
+    </p>
+  </div>
+</header>
+
+<section class="step" id="paso1">
+  <div class="wrap">
+    <div class="step-head"><span class="step-num" data-i18n="paso1.badge">PASO 1</span><h2 data-i18n="paso1.title">El portafolio</h2></div>
+    <p data-i18n="paso1.p">
+      El VaR es una propiedad del portafolio completo, no de cada activo por separado —
+      la correlación entre activos importa tanto como su volatilidad individual. Arma tu
+      portafolio con tickers reales y sus pesos (se normalizan automáticamente para sumar
+      100%).
+    </p>
+    <div class="portfolio-table">
+      <div class="portfolio-header">
+        <span data-i18n="paso1.tickerHeader">Ticker</span>
+        <span data-i18n="paso1.weightHeader">Peso (%)</span>
+      </div>
+      <div id="portfolio-rows"></div>
+      <button type="button" class="add-row-btn" id="add-row-btn" data-i18n="paso1.addRow">+ Agregar activo</button>
+    </div>
+    <p id="normalized-note" style="font-size:13px; color:var(--text-faint); margin-top:12px"></p>
+  </div>
+</section>
+
+<section class="step" id="paso2">
+  <div class="wrap">
+    <div class="step-head"><span class="step-num" data-i18n="paso2.badge">PASO 2</span><h2 data-i18n="paso2.title">Retornos del portafolio combinado</h2></div>
+    <p data-i18n="paso2.p">
+      Con los pesos ya definidos, cada retorno diario del portafolio es el promedio
+      ponderado de los retornos de cada activo ese día. El histograma de abajo muestra
+      esa distribución real — todo lo que sigue intenta resumirla en un solo número.
+    </p>
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="label" data-i18n="paso2.dailyMeanLabel">Retorno diario promedio</div><div class="value" id="daily-mean">—</div></div>
+      <div class="stat-tile"><div class="label" data-i18n="paso2.dailyVolLabel">Volatilidad diaria</div><div class="value" id="daily-vol">—</div></div>
+      <div class="stat-tile"><div class="label" data-i18n="paso2.annualVolLabel">Volatilidad anualizada</div><div class="value" id="annual-vol">—</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="step" id="paso3">
+  <div class="wrap">
+    <div class="step-head"><span class="step-num" data-i18n="paso3.badge">PASO 3</span><h2 data-i18n="paso3.title">VaR Histórico</h2></div>
+    <p data-i18n="paso3.p">
+      El método más simple y menos sujeto a supuestos: ordenar todos los retornos
+      históricos reales y tomar el percentil correspondiente al nivel de confianza
+      elegido. No asume ninguna distribución — pero solo es tan bueno como la historia de
+      la que se toma, y no anticipa nada que no haya pasado ya.
+    </p>
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="label" data-i18n="app.statHistVar">VaR Histórico</div><div class="value down" id="hist-var">—</div></div>
+      <div class="stat-tile"><div class="label" data-i18n="app.statHistEs">ES Histórico</div><div class="value down" id="hist-es">—</div></div>
+    </div>
+    <div class="card"><div class="plot" id="returns-histogram"></div></div>
+  </div>
+</section>
+
+<section class="step" id="paso4">
+  <div class="wrap">
+    <div class="step-head"><span class="step-num" data-i18n="paso4.badge">PASO 4</span><h2 data-i18n="paso4.title">VaR Paramétrico (varianza-covarianza)</h2></div>
+    <p data-i18n="paso4.p">
+      Asume que los retornos del portafolio siguen una distribución normal — con eso, el
+      VaR se calcula directo de la media y la desviación estándar, sin necesitar toda la
+      historia punto por punto. Es rápido y suave, pero subestima el riesgo real cuando
+      los retornos tienen colas más gordas de lo normal (ver Límites).
+    </p>
+    <div class="formula-block" data-i18n="paso4.formula">$$ VaR_\alpha = -(\mu_p + z_\alpha \, \sigma_p) $$</div>
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="label" data-i18n="app.statParamVar">VaR Paramétrico</div><div class="value down" id="param-var">—</div></div>
+      <div class="stat-tile"><div class="label" data-i18n="app.statParamEs">ES Paramétrico</div><div class="value down" id="param-es">—</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="step" id="paso5">
+  <div class="wrap">
+    <div class="step-head"><span class="step-num" data-i18n="paso5.badge">PASO 5</span><h2 data-i18n="paso5.title">VaR Monte Carlo y Expected Shortfall</h2></div>
+    <p id="paso5-text">
+      En vez de asumir una fórmula cerrada, se simulan miles de escenarios sintéticos
+      correlacionados y se mide el percentil sobre esas simulaciones. De paso se calcula
+      el Expected Shortfall (o CVaR): el promedio de las pérdidas más allá del VaR.
+    </p>
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="label" data-i18n="app.statMcVar">VaR Monte Carlo</div><div class="value down" id="mc-var">—</div></div>
+      <div class="stat-tile"><div class="label" data-i18n="app.statMcEs">ES Monte Carlo</div><div class="value down" id="mc-es">—</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="step" id="paso6">
+  <div class="wrap">
+    <div class="step-head"><span class="step-num" data-i18n="paso6.badge">PASO 6</span><h2 data-i18n="paso6.title">Los 3 métodos, comparados</h2></div>
+    <p data-i18n="paso6.p">
+      Cuando los 3 métodos coinciden, hay más confianza en la estimación. Cuando difieren
+      bastante, suele ser porque los retornos reales se alejan de la normalidad
+      (asimetría, colas gordas).
+    </p>
+    <div class="card"><div class="plot short" id="comparison-chart"></div></div>
+  </div>
+</section>
+
+<section class="step" id="paso7">
+  <div class="wrap">
+    <div class="step-head"><span class="step-num" data-i18n="paso7.badge">PASO 7</span><h2 data-i18n="paso7.title">Backtesting</h2></div>
+    <p id="paso7-text">
+      La prueba de fuego de cualquier VaR: ¿cuántas veces la pérdida real superó lo que
+      el modelo decía que pasaría solo el 5% de las veces?
+    </p>
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="label" data-i18n="paso7.exceptionsLabel">Excepciones reales</div><div class="value" id="backtest-exceptions">—</div></div>
+      <div class="stat-tile"><div class="label" data-i18n="paso7.expectedLabel">Excepciones esperadas</div><div class="value" id="backtest-expected">—</div></div>
+      <div class="stat-tile"><div class="label" data-i18n="paso7.zoneLabel">Semáforo</div><div class="value" id="backtest-zone">—</div></div>
+    </div>
+    <div class="card"><div class="plot" id="backtest-chart"></div></div>
+  </div>
+</section>
+
+<section class="step" id="limitaciones">
+  <div class="wrap">
+    <div class="step-head"><span class="step-num" data-i18n="limits.badge">LÍMITES</span><h2 data-i18n="limits.title">Limitaciones y para seguir leyendo</h2></div>
+    <div class="callout danger" data-i18n="limits.callout">
+      Este sitio es material educativo, no asesoría financiera. El VaR tiene límites
+      conocidos: los retornos reales rara vez son normales, las correlaciones entre
+      activos suben en crisis, y el VaR no dice nada sobre qué tan mala puede ser la
+      pérdida más allá del umbral (por eso el Expected Shortfall es un complemento
+      importante).
+    </div>
+    <p style="margin-top:20px" data-i18n="limits.reading">
+      Para profundizar: Philippe Jorion, <em>"Value at Risk"</em>, el texto de referencia
+      estándar.
+    </p>
+  </div>
+</section>
+
+<section class="step" id="creador" style="border-bottom:none">
+  <div class="wrap">
+    <div class="step-head"><span class="step-num" data-i18n="creator.badge">CREADOR</span><h2 data-i18n="creator.title">Sobre el creador</h2></div>
+    <div class="creator-card">
+      <p data-i18n="creator.text" style="margin:0">Hecho por Andrés Londoño.</p>
+      <div class="creator-links">
+        <a href="https://github.com/andreslondonopar-ux" target="_blank" rel="noopener">GitHub ↗</a>
+        <a href="https://www.linkedin.com/in/andrés-londoño-paredes/" target="_blank" rel="noopener">LinkedIn ↗</a>
+        <a href="https://markowitz-portfolio-lab.vercel.app" target="_blank" rel="noopener">Markowitz Lab ↗</a>
+        <a href="https://capm-beta-lab.vercel.app" target="_blank" rel="noopener">CAPM Lab ↗</a>
+        <a href="https://black-scholes-lab.vercel.app" target="_blank" rel="noopener">Black-Scholes Lab ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap" data-i18n="footer.text">
+    VaR Dashboard — proyecto educativo independiente, cuarto de la serie. Datos: Yahoo Finance. Cómputo: 100% en el navegador (JavaScript).
+  </div>
+</footer>
+
+<script src="assets/js/i18n.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="assets/js/linalg.js"></script>
+<script src="assets/js/markowitz.js"></script>
+<script src="assets/js/var.js"></script>
+<script src="assets/js/plots.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
