@@ -129,6 +129,20 @@ const I18N = (() => {
         computed: the average loss beyond the VaR — how much is lost, on average, in the
         worst {tailPct} of cases.`,
     },
+    "paso5.whyEs": {
+      es: `No es casualidad que Basel III/IV haya migrado su marco regulatorio de VaR a
+        Expected Shortfall: el VaR no es una "medida de riesgo coherente" en el sentido
+        técnico de Artzner et al. (1999) — puede violar la <strong>subaditividad</strong>
+        (el VaR de un portafolio combinado puede ser mayor que la suma del VaR de sus
+        partes por separado, lo opuesto de lo que se espera de la diversificación). El
+        Expected Shortfall sí es coherente, y por eso es el estándar regulatorio actual.`,
+      en: `It's no coincidence that Basel III/IV moved its regulatory framework from VaR
+        to Expected Shortfall: VaR is not a "coherent risk measure" in the technical
+        sense of Artzner et al. (1999) — it can violate <strong>subadditivity</strong>
+        (the VaR of a combined portfolio can be larger than the sum of its parts' VaR,
+        the opposite of what diversification should give you). Expected Shortfall is
+        coherent, which is why it's the current regulatory standard.`,
+    },
 
     "paso6.badge": { es: "PASO 6", en: "STEP 6" },
     "paso6.title": { es: "Los 3 métodos, comparados", en: "All 3 methods, compared" },
@@ -158,6 +172,34 @@ const I18N = (() => {
         Basel traffic-light system for banks (this is a simplified version, not the
         official Basel 99%/250-day table).`,
     },
+    "paso7.methodNote": {
+      es: `Este backtest evalúa específicamente el <strong>VaR Histórico</strong> (Paso 3) —
+        el Paramétrico y el Monte Carlo no se backtestean por separado aquí.`,
+      en: `This backtest specifically evaluates the <strong>Historical VaR</strong> (Step 3)
+        — the Parametric and Monte Carlo methods aren't backtested separately here.`,
+    },
+    "paso7.kupiecTitle": { es: "El test formal: Kupiec (1995)", en: "The formal test: Kupiec (1995)" },
+    "paso7.kupiecP": {
+      es: `El semáforo de arriba es una simplificación — la prueba que de verdad usa un
+        banco regulado es el <strong>test de Kupiec</strong> (proporción de fallas): un
+        test de razón de verosimilitud que compara la tasa de excepciones observada contra
+        la esperada, con un veredicto estadístico (no solo un conteo). Nota real: el test
+        es <strong>bilateral</strong> — un modelo con <em>muy pocas</em> excepciones
+        también se rechaza (es sospechosamente conservador, sobreestima el riesgo tanto
+        como uno que lo subestima).`,
+      en: `The traffic light above is a simplification — the test a regulated bank
+        actually uses is the <strong>Kupiec test</strong> (proportion of failures): a
+        likelihood-ratio test comparing the observed exception rate against the expected
+        one, with a statistical verdict (not just a count). Real nuance: the test is
+        <strong>two-sided</strong> — a model with <em>too few</em> exceptions also gets
+        rejected (it's suspiciously conservative, overestimating risk just as much as
+        underestimating it is a problem).`,
+    },
+    "paso7.kupiecLrLabel": { es: "Estadístico LR", en: "LR statistic" },
+    "paso7.kupiecPValueLabel": { es: "p-valor", en: "p-value" },
+    "paso7.kupiecVerdictLabel": { es: "Veredicto (95%)", en: "Verdict (95%)" },
+    "paso7.kupiecRejected": { es: "Rechazado — el modelo no es consistente con los datos", en: "Rejected — the model isn't consistent with the data" },
+    "paso7.kupiecNotRejected": { es: "No rechazado — consistente con los datos", en: "Not rejected — consistent with the data" },
     "paso7.exceptionsLabel": { es: "Excepciones reales", en: "Actual exceptions" },
     "paso7.expectedLabel": { es: "Excepciones esperadas", en: "Expected exceptions" },
     "paso7.zoneLabel": { es: "Semáforo", en: "Traffic light" },
@@ -177,9 +219,13 @@ const I18N = (() => {
         <strong>no dice nada sobre qué tan mala puede ser la pérdida más allá del
         umbral</strong> — dos portafolios pueden tener el mismo VaR con colas de pérdida
         radicalmente distintas (por eso el Expected Shortfall del Paso 5 es un
-        complemento importante, y por eso Basel III migró su marco regulatorio hacia
-        Expected Shortfall). El VaR histórico, además, solo "sabe" lo que ya pasó en la
-        ventana de datos usada.`,
+        complemento importante — ver también la nota de coherencia/subaditividad ahí). El
+        modelo también asume retornos <strong>i.i.d.</strong> (independientes e
+        idénticamente distribuidos) — en la realidad la volatilidad se agrupa en el
+        tiempo ("clustering": días tranquilos siguen a días tranquilos, crisis siguen a
+        crisis), un patrón que modelos GARCH capturan y que este sitio, por simplicidad,
+        no modela. El VaR histórico, además, solo "sabe" lo que ya pasó en la ventana de
+        datos usada.`,
       en: `This site is educational material, not financial advice. VaR has known,
         widely discussed limitations: real returns are rarely normal (they have
         <strong>fatter tails</strong> — extreme events are more frequent than normal
@@ -188,9 +234,12 @@ const I18N = (() => {
         diversification fails), and VaR <strong>says nothing about how bad the loss can
         get beyond the threshold</strong> — two portfolios can have the same VaR with
         radically different loss tails (which is why the Expected Shortfall from Step 5
-        is an important complement, and why Basel III moved its regulatory framework
-        toward Expected Shortfall). Historical VaR, additionally, only "knows" what has
-        already happened in the data window used.`,
+        is an important complement — see the coherence/subadditivity note there too). The
+        model also assumes <strong>i.i.d.</strong> returns (independent and identically
+        distributed) — in reality volatility clusters over time ("clustering": calm days
+        follow calm days, crises follow crises), a pattern GARCH models capture and that
+        this site, for simplicity, doesn't model. Historical VaR, additionally, only
+        "knows" what has already happened in the data window used.`,
     },
     "limits.reading": {
       es: `Para profundizar: Philippe Jorion, <em>"Value at Risk: The New Benchmark for

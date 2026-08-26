@@ -202,6 +202,14 @@
       <div class="stat-tile"><div class="label" data-i18n="app.statMcVar">VaR Monte Carlo</div><div class="value down" id="mc-var">—</div></div>
       <div class="stat-tile"><div class="label" data-i18n="app.statMcEs">ES Monte Carlo</div><div class="value down" id="mc-es">—</div></div>
     </div>
+    <div class="callout" style="margin-top:16px" data-i18n="paso5.whyEs">
+      No es casualidad que Basel III/IV haya migrado su marco regulatorio de VaR a
+      Expected Shortfall: el VaR no es una "medida de riesgo coherente" en el sentido
+      técnico de Artzner et al. (1999) — puede violar la <strong>subaditividad</strong>
+      (el VaR de un portafolio combinado puede ser mayor que la suma del VaR de sus
+      partes por separado, lo opuesto de lo que se espera de la diversificación). El
+      Expected Shortfall sí es coherente, y por eso es el estándar regulatorio actual.
+    </div>
   </div>
 </section>
 
@@ -224,12 +232,32 @@
       La prueba de fuego de cualquier VaR: ¿cuántas veces la pérdida real superó lo que
       el modelo decía que pasaría solo el 5% de las veces?
     </p>
+    <p style="font-size:13px; color:var(--text-faint)" data-i18n="paso7.methodNote">
+      Este backtest evalúa específicamente el <strong>VaR Histórico</strong> (Paso 3) — el
+      Paramétrico y el Monte Carlo no se backtestean por separado aquí.
+    </p>
     <div class="stat-grid">
       <div class="stat-tile"><div class="label" data-i18n="paso7.exceptionsLabel">Excepciones reales</div><div class="value" id="backtest-exceptions">—</div></div>
       <div class="stat-tile"><div class="label" data-i18n="paso7.expectedLabel">Excepciones esperadas</div><div class="value" id="backtest-expected">—</div></div>
       <div class="stat-tile"><div class="label" data-i18n="paso7.zoneLabel">Semáforo</div><div class="value" id="backtest-zone">—</div></div>
     </div>
     <div class="card"><div class="plot" id="backtest-chart"></div></div>
+
+    <h3 style="font-size:1.05rem; margin-top:24px" data-i18n="paso7.kupiecTitle">El test formal: Kupiec (1995)</h3>
+    <p data-i18n="paso7.kupiecP">
+      El semáforo de arriba es una simplificación — la prueba que de verdad usa un banco
+      regulado es el <strong>test de Kupiec</strong> (proporción de fallas): un test de
+      razón de verosimilitud que compara la tasa de excepciones observada contra la
+      esperada, con un veredicto estadístico (no solo un conteo). Nota real: el test es
+      <strong>bilateral</strong> — un modelo con <em>muy pocas</em> excepciones también se
+      rechaza (es sospechosamente conservador, sobreestima el riesgo tanto como uno que lo
+      subestima).
+    </p>
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="label" data-i18n="paso7.kupiecLrLabel">Estadístico LR</div><div class="value" id="kupiec-lr">—</div></div>
+      <div class="stat-tile"><div class="label" data-i18n="paso7.kupiecPValueLabel">p-valor</div><div class="value" id="kupiec-pvalue">—</div></div>
+      <div class="stat-tile"><div class="label" data-i18n="paso7.kupiecVerdictLabel">Veredicto (95%)</div><div class="value" id="kupiec-verdict">—</div></div>
+    </div>
   </div>
 </section>
 

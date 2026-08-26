@@ -141,9 +141,8 @@ const VaR = (() => {
     };
   }
 
-  // Backtesting simplificado (no es el test de Kupiec formal): cuenta cuántos días la
-  // pérdida real superó el VaR estimado, compara contra el número esperado, y da un
-  // semáforo aproximado por razón actual/esperado.
+  // Backtesting simplificado (semáforo por razón actual/esperado, no la tabla oficial de
+  // Basel): cuenta cuántos días la pérdida real superó el VaR estimado.
   function backtest(returns, varEstimate, confidence) {
     const threshold = -varEstimate;
     const exceptions = returns.filter((r) => r < threshold).length;
@@ -156,9 +155,27 @@ const VaR = (() => {
     return { exceptions, expected, ratio, zone, n: returns.length };
   }
 
+  // Test de Kupiec (1995) — Proportion of Failures: la prueba de backtesting formal que
+  // de verdad usa un banco, en vez del conteo simplificado de arriba. Bajo H0 (el modelo
+  // es correcto), el estadístico de razón de verosimilitud LR ~ chi-cuadrado(1); se
+  // rechaza el modelo si LR > 3.841 (95%). p-valor vía la relación chi²(1) = Z².
+  function kupiecTest(exceptions, n, expectedRate) {
+    const x = exceptions;
+    const p = expectedRate;
+    const piHat = n > 0 ? x / n : 0;
+    const logNull = (n - x) * Math.log(1 - p) + x * Math.log(p);
+    let logAlt = 0;
+    if (x > 0) logAlt += x * Math.log(piHat);
+    if (x < n) logAlt += (n - x) * Math.log(1 - piHat);
+    const lr = Math.max(-2 * (logNull - logAlt), 0);
+    const z = Math.sqrt(lr);
+    const pValue = 2 * (1 - normCdf(z));
+    return { lr, pValue, reject: lr > 3.841, exceptions: x, n, expectedRate };
+  }
+
   return {
     erf, normCdf, normPdf, invNormCdf, cholesky, simulateMultivariateNormal,
     percentile, historicalVaR, historicalES, parametricVaR, parametricES,
-    monteCarloVaR, backtest,
+    monteCarloVaR, backtest, kupiecTest,
   };
 })();

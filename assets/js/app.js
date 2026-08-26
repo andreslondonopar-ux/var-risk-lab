@@ -46,6 +46,9 @@ const DEFAULT_PORTFOLIO = [
   const backtestExpectedEl = el("backtest-expected");
   const backtestZoneEl = el("backtest-zone");
   const backtestChartEl = el("backtest-chart");
+  const kupiecLrEl = el("kupiec-lr");
+  const kupiecPValueEl = el("kupiec-pvalue");
+  const kupiecVerdictEl = el("kupiec-verdict");
 
   let state = null;
 
@@ -65,6 +68,18 @@ const DEFAULT_PORTFOLIO = [
   function setBusy(b) {
     recalcBtn.disabled = b;
     document.body.classList.toggle("is-recalculating", b);
+  }
+
+  // Escala un VaR/ES de 1 día a un horizonte de N días. La regla de raíz del tiempo solo
+  // aplica al componente de VOLATILIDAD, no al de media (que escala linealmente) — un
+  // VaR/ES de 1 día ya mezcla ambos (estimate1d = -(mean1d + q)), así que primero se
+  // recupera `q` (la parte de "desviación") y luego se reescala cada parte por separado.
+  // CORRECCIÓN 2026-08-25: antes se multiplicaba el estimate1d completo por sqrt(horizonte),
+  // lo que también escalaba la media por sqrt(N) en vez de por N — error pequeño con
+  // mean≈0 pero real para horizontes largos o activos con deriva fuerte.
+  function scaleRiskMeasure(estimate1d, mean1d, horizonDays) {
+    const deviation1d = -estimate1d - mean1d;
+    return -(mean1d * horizonDays + deviation1d * Math.sqrt(horizonDays));
   }
 
   async function fetchPrices(tickers, years) {
@@ -124,7 +139,7 @@ const DEFAULT_PORTFOLIO = [
     if (!state) return;
     const {
       tickers, weights, portfolioReturns, dailyMean, dailyVol, annualVol,
-      histVar, histEs, paramVar, paramEs, mc, backtest, dates, confidence, tailPct,
+      histVar, histEs, histVar1d, paramVar, paramEs, mc, backtest, kupiec, dates, confidence, tailPct,
     } = state;
 
     normalizedNoteEl.textContent = I18N.t("paso1.normalizedNote", {
@@ -162,7 +177,15 @@ const DEFAULT_PORTFOLIO = [
     const zoneKey = backtest.zone === "green" ? "paso7.zoneGreen" : backtest.zone === "yellow" ? "paso7.zoneYellow" : "paso7.zoneRed";
     backtestZoneEl.textContent = I18N.t(zoneKey);
     backtestZoneEl.className = "value " + (backtest.zone === "green" ? "up" : "down");
-    Plots.renderBacktestChart(backtestChartEl, dates, portfolioReturns, histVar, I18N.t("charts.dateAxis"), I18N.t("charts.returnAxis"), I18N.t("charts.exceptionLabel"));
+    // El backtest siempre compara contra retornos REALES de 1 día — usa histVar1d (sin
+    // escalar por horizonte), no `histVar`, para que la línea del gráfico coincida
+    // exactamente con el umbral que realmente cuenta las excepciones.
+    Plots.renderBacktestChart(backtestChartEl, dates, portfolioReturns, histVar1d, I18N.t("charts.dateAxis"), I18N.t("charts.returnAxis"), I18N.t("charts.exceptionLabel"));
+
+    kupiecLrEl.textContent = kupiec.lr.toFixed(3);
+    kupiecPValueEl.textContent = kupiec.pValue.toFixed(4);
+    kupiecVerdictEl.textContent = I18N.t(kupiec.reject ? "paso7.kupiecRejected" : "paso7.kupiecNotRejected");
+    kupiecVerdictEl.className = "value " + (kupiec.reject ? "down" : "up");
   }
 
   async function runPipeline() {
@@ -213,7 +236,6 @@ const DEFAULT_PORTFOLIO = [
 
       const confidence = parseFloat(confidenceSelect.value);
       const horizon = clamp(parseInt(horizonInput.value, 10) || 1, 1, 250);
-      const horizonScale = Math.sqrt(horizon);
       const tailPct = fmtPct(1 - confidence, 0);
 
       const histVar1d = VaR.historicalVaR(portfolioReturns, confidence);
@@ -223,13 +245,19 @@ const DEFAULT_PORTFOLIO = [
       const mc1d = VaR.monteCarloVaR(dailyMeanVec, dailyCov, orderedWeights, confidence, 5000);
 
       const backtest = VaR.backtest(portfolioReturns, histVar1d, confidence);
+      const kupiec = VaR.kupiecTest(backtest.exceptions, backtest.n, 1 - confidence);
 
       state = {
         tickers: aligned.tickers, weights: orderedWeights, dates: aligned.dates.slice(1),
         portfolioReturns, dailyMean, dailyVol, annualVol,
-        histVar: histVar1d * horizonScale, histEs: histEs1d * horizonScale,
-        paramVar: paramVar1d * horizonScale, paramEs: paramEs1d * horizonScale,
-        mc: { varEstimate: mc1d.varEstimate * horizonScale, esEstimate: mc1d.esEstimate * horizonScale },
+        histVar: scaleRiskMeasure(histVar1d, dailyMean, horizon), histEs: scaleRiskMeasure(histEs1d, dailyMean, horizon),
+        histVar1d,
+        paramVar: scaleRiskMeasure(paramVar1d, dailyMean, horizon), paramEs: scaleRiskMeasure(paramEs1d, dailyMean, horizon),
+        mc: {
+          varEstimate: scaleRiskMeasure(mc1d.varEstimate, dailyMean, horizon),
+          esEstimate: scaleRiskMeasure(mc1d.esEstimate, dailyMean, horizon),
+        },
+        kupiec,
         backtest, confidence, tailPct,
       };
       renderFromState();
